@@ -14,6 +14,9 @@ const nextConfig = {
       },{
         protocol: 'https',
         hostname: 'oqhubs.com',
+      },{
+        protocol: 'https',
+        hostname: 'techcityoman.com',
       }
     ],
   },

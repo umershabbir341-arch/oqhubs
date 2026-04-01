@@ -3,8 +3,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { Instagram, Facebook, Sparkles, Star, Music } from 'lucide-react';
+import { useUI } from '@/context/UIContext';
 
 const Footer = () => {
+    const { categories } = useUI();
+
     return (
         <footer className="bg-[#050505] text-white pt-20 pb-24 md:pb-0 overflow-hidden">
             <div className="max-w-[100vw] mx-auto px-6 sm:px-8 mb-10">
@@ -35,10 +38,24 @@ const Footer = () => {
                     <div className="lg:col-span-2 flex flex-col gap-6">
                         <h3 className="font-bold text-sm uppercase tracking-widest text-zinc-400">SHOP</h3>
                         <div className="flex flex-col gap-4 text-zinc-500">
-                            <Link href="/collections/watches" className="hover:text-white transition-colors">Smart Watches</Link>
-                            <Link href="/collections/earbuds" className="hover:text-white transition-colors">Earbuds</Link>
-                            <Link href="/collections/headphones-neckband" className="hover:text-white transition-colors">Headphones</Link>
-                            <Link href="/collections/new-arrivals" className="hover:text-white transition-colors">Vision 2026</Link>
+                            {categories.length > 0 ? (
+                                categories.slice(0, 5).map((cat) => (
+                                    <Link
+                                        key={cat.id}
+                                        href={`/collections/${cat.handle}`}
+                                        className="hover:text-white transition-colors uppercase font-medium text-xs tracking-wider"
+                                    >
+                                        {cat.title}
+                                    </Link>
+                                ))
+                            ) : (
+                                <>
+                                    <Link href="/collections/watches" className="hover:text-white transition-colors">Smart Watches</Link>
+                                    <Link href="/collections/earbuds" className="hover:text-white transition-colors">Earbuds</Link>
+                                    <Link href="/collections/headphones-neckband" className="hover:text-white transition-colors">Headphones</Link>
+                                    <Link href="/collections/new-arrivals" className="hover:text-white transition-colors">Vision 2026</Link>
+                                </>
+                            )}
                         </div>
                     </div>
 

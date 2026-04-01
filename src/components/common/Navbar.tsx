@@ -19,7 +19,7 @@ interface NavbarProps {
 
 const Navbar = ({ colorClassName }: NavbarProps) => {
     const { toggleCart, totalItems } = useCart();
-    const { isAnySheetOpen, openSearch, openSheets, setSheetOpen } = useUI();
+    const { isAnySheetOpen, openSearch, openSheets, setSheetOpen, categories, isLoadingCategories } = useUI();
     const { customer, logout } = useAuth();
     const router = useRouter();
     const isMobileMenuOpen = openSheets.has('mobile-menu');
@@ -48,6 +48,24 @@ const Navbar = ({ colorClassName }: NavbarProps) => {
             document.body.style.overflow = 'unset';
         };
     }, [isMobileMenuOpen]);
+
+    // Use dynamic categories from UI context
+    const mainNavLinks = React.useMemo(() => {
+        const links = [{ href: "/", label: "HOME" }];
+
+        // Add first 4 categories to main nav
+        const topCategories = categories.slice(0, 4).map(cat => ({
+            href: `/collections/${cat.handle}`,
+            label: cat.title.toUpperCase()
+        }));
+
+        return [...links, ...topCategories];
+    }, [categories]);
+
+    // Remaining categories for the dropdown
+    const remainingCategories = React.useMemo(() => {
+        return categories.slice(4);
+    }, [categories]);
 
     const menuVariants: Variants = {
         closed: {
@@ -80,34 +98,6 @@ const Navbar = ({ colorClassName }: NavbarProps) => {
             }
         })
     };
-
-    const [categories, setCategories] = React.useState<any[]>([]);
-
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const response = await fetch('/api/woo/categories');
-                const data = await response.json();
-                setCategories(data);
-            } catch (error) {
-                console.error('Error fetching categories:', error);
-            }
-        };
-        fetchCategories();
-    }, []);
-
-    // Explicitly defined main links based on user request
-    const mainNavLinks = [
-        { href: "/", label: "HOME" },
-        { href: "/collections/watches", label: "SMART WATCHES" },
-        { href: "/collections/earbuds", label: "EARBUDS" },
-        { href: "/collections/headphones-neckband", label: "HEADPHONE" },
-        { href: "/collections/new-arrivals", label: "VISION 2026" },
-    ];
-
-    // Filter categories to show only those not in the main nav
-    const excludedHandles = ['watches', 'earbuds', 'headphones-neckband', 'new-arrivals'];
-    const remainingCategories = categories.filter(cat => !excludedHandles.includes(cat.handle));
 
     return (
         <motion.nav

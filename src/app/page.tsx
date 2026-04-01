@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import nextDynamic from "next/dynamic";
 import PromotionalBento from "@/components/home/PromotionalBento";
 import FeaturedSlider from "@/components/home/FeaturedSlider";
@@ -10,77 +7,28 @@ import BentoGrid from "@/components/home/BentoGrid";
 import BestSeller from "@/components/home/BestSeller";
 import FeaturedSaleSection from "@/components/home/FeaturedSaleSection";
 import TabbedProductSection from "@/components/home/TabbedProductSection";
-import type { Product } from "@/types";
+import {
+    getAllProducts,
+    getProductsByCategoryName,
+    transformWooProduct,
+} from '@/lib/woocommerce';
 
 const HeroSection = nextDynamic(() => import("@/components/home/HeroSection"), {
     ssr: false,
 });
 
-interface HomeData {
-    products: Product[];
-    watchesProducts: Product[];
-    earbudsProducts: Product[];
-}
+export default async function Home() {
+    // Parallel data fetching on server
+    const [headphonesWoo, watchesWoo, earbudsWoo] = await Promise.all([
+        getProductsByCategoryName('Headphones & Neckband'),
+        getProductsByCategoryName('Watches'),
+        getProductsByCategoryName('Earbuds')
+    ]);
 
-export default function Home() {
-    const [data, setData] = useState<HomeData | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [hasError, setHasError] = useState(false);
-
-    useEffect(() => {
-        let isMounted = true;
-
-        async function fetchHomeData() {
-            try {
-                const res = await fetch("/api/home");
-                if (!res.ok) {
-                    throw new Error("Failed to load home data");
-                }
-                const json = await res.json();
-                if (isMounted) {
-                    setData(json);
-                    setHasError(false);
-                }
-            } catch (error) {
-                console.error(error);
-                if (isMounted) {
-                    setHasError(true);
-                }
-            } finally {
-                if (isMounted) {
-                    setIsLoading(false);
-                }
-            }
-        }
-
-        fetchHomeData();
-
-        return () => {
-            isMounted = false;
-        };
-    }, []);
-
-    const products = data?.products ?? [];
-    const watchesProducts = data?.watchesProducts ?? [];
-    const earbudsProducts = data?.earbudsProducts ?? [];
-
-    if (isLoading) {
-        return (
-            <main>
-                <div className="min-h-screen animate-pulse bg-gray-50" />
-            </main>
-        );
-    }
-
-    if (hasError) {
-        return (
-            <main className="min-h-screen flex items-center justify-center">
-                <p className="text-sm text-gray-500">
-                    Something went wrong while loading products. Please try again.
-                </p>
-            </main>
-        );
-    }
+    const baseWooProducts = headphonesWoo && headphonesWoo.length > 0 ? headphonesWoo : await getAllProducts();
+    const products = baseWooProducts.map(transformWooProduct);
+    const watchesProducts = (watchesWoo || []).map(transformWooProduct);
+    const earbudsProducts = (earbudsWoo || []).map(transformWooProduct);
 
     return (
         <main>
