@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
+
+interface Category {
+    id: string;
+    title: string;
+    handle: string;
+}
 
 interface UIContextType {
     isAnySheetOpen: boolean;
@@ -10,6 +16,9 @@ interface UIContextType {
     isSearchOpen: boolean;
     openSearch: () => void;
     closeSearch: () => void;
+    // Categories state
+    categories: Category[];
+    isLoadingCategories: boolean;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
@@ -17,6 +26,8 @@ const UIContext = createContext<UIContextType | undefined>(undefined);
 export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [openSheets, setOpenSheets] = useState<Set<string>>(new Set());
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
     const setSheetOpen = useCallback((id: string, isOpen: boolean) => {
         setOpenSheets(prev => {
@@ -36,6 +47,24 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     const openSearch = useCallback(() => setIsSearchOpen(true), []);
     const closeSearch = useCallback(() => setIsSearchOpen(false), []);
 
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                setIsLoadingCategories(true);
+                const response = await fetch('/api/woo/categories');
+                const data = await response.json();
+                if (Array.isArray(data)) {
+                    setCategories(data);
+                }
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            } finally {
+                setIsLoadingCategories(false);
+            }
+        };
+        fetchCategories();
+    }, []);
+
     const isAnySheetOpen = openSheets.size > 0 || isSearchOpen;
 
     const value = useMemo(() => ({
@@ -44,8 +73,10 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         setSheetOpen,
         isSearchOpen,
         openSearch,
-        closeSearch
-    }), [isAnySheetOpen, openSheets, setSheetOpen, isSearchOpen, openSearch, closeSearch]);
+        closeSearch,
+        categories,
+        isLoadingCategories
+    }), [isAnySheetOpen, openSheets, setSheetOpen, isSearchOpen, openSearch, closeSearch, categories, isLoadingCategories]);
 
     return (
         <UIContext.Provider value={value}>
